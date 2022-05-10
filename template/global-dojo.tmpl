@@ -158,6 +158,12 @@
 {{- end -}}
 
 {{- /* dojo.alerts.url.firing(Data) */ -}}
+{{- /* Title for dojo.alerts.url.firing */ -}}
+{{- define "dojo.alerts.url.firing.title" -}}
+    {{- "📜 Alert Rules" -}}
+{{- end -}}
+
+{{- /* dojo.alerts.url.firing(Data) */ -}}
 {{- /* URL that points to Grafana Labs list of firing alerts. */ -}}
 {{- define "dojo.alerts.url.firing" -}}
     {{- "https://paymentsense.grafana.net/alerting/list?" }}
@@ -180,6 +186,12 @@
             {{- end -}}
         {{- "&ruleType=alerting" -}}
         {{- "&alertState=firing" -}}
+{{- end -}}
+
+{{- /* dojo.alerts.url.history(Data) */ -}}
+{{- /* Title for dojo.alerts.url.history */ -}}
+{{- define "dojo.alerts.url.history.title" -}}
+    {{- "📈 Alert History Dashboard" -}}
 {{- end -}}
 
 {{- /* dojo.alerts.url.history(Data) */ -}}
@@ -215,6 +227,12 @@
 {{- end -}}
 
 {{- /* dojo.alerts.url.new_silence(Data) */ -}}
+{{- /* Title for dojo.alerts.url.new_silence */ -}}
+{{- define "dojo.alerts.url.new_silence.title" -}}
+    {{- "🔕 Silence Alerts" -}}
+{{- end -}}
+
+{{- /* dojo.alerts.url.new_silence(Data) */ -}}
 {{- /* URL that points to a Grafana Labs page where a silence to all matching */ -}}
 {{- /* alerts can be added */ -}}
 {{- define "dojo.alerts.url.new_silence" -}}
@@ -245,13 +263,13 @@
 {{- /* dojo.documentation.links(Data) */ -}}
 {{- /* Docummentation with links to references regarding the notification */ -}}
 {{- define "dojo.documentation.links" -}}
-    {{- "📜 Alert Rules:\n" -}}
+    {{ template "dojo.alerts.url.firing.title" . }}{{- ":\n" -}}
     {{ template "dojo.alerts.url.firing" . }}{{- "\n" -}}
     {{- "\n" -}}
-    {{- "📈 Alert History Dashboard:\n" -}}
+    {{ template "dojo.alerts.url.history.title" . }}{{- ":\n" -}}
     {{ template "dojo.alerts.url.history" . -}}{{- "\n" -}}
     {{- "\n" -}}
-    {{- "🔕 Silence Alerts:\n" -}}
+    {{ template "dojo.alerts.url.new_silence.title" . }}{{- ":\n" -}}
     {{ template "dojo.alerts.url.new_silence" . -}}
 {{- end -}}
 
