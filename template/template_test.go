@@ -814,7 +814,7 @@ func TestDojoAlertDetails(t *testing.T) {
 	}
 }
 
-func TestDojoAlertsDetails(t *testing.T) {
+func TestDojoAlertsDetailsList(t *testing.T) {
 	tmpl, err := FromGlobs()
 	require.NoError(t, err)
 
@@ -827,8 +827,8 @@ func TestDojoAlertsDetails(t *testing.T) {
 		fail bool
 	}{
 		{
-			title: "dojo.alerts.details with one alert",
-			in:    `{{ template "dojo.alerts.details" .Alerts }}`,
+			title: "dojo.alerts.details_list with one alert",
+			in:    `{{ template "dojo.alerts.details_list" .Alerts }}`,
 			data: Data{
 				Alerts: Alerts{
 					Alert{
@@ -853,8 +853,8 @@ func TestDojoAlertsDetails(t *testing.T) {
 				"http://generator.url/",
 		},
 		{
-			title: "dojo.alerts.details with multiple alerts",
-			in:    `{{ template "dojo.alerts.details" .Alerts }}`,
+			title: "dojo.alerts.details_list with multiple alerts",
+			in:    `{{ template "dojo.alerts.details_list" .Alerts }}`,
 			data: Data{
 				Alerts: Alerts{
 					Alert{
@@ -910,7 +910,7 @@ func TestDojoAlertsDetails(t *testing.T) {
 	}
 }
 
-func TestDojoAlertsStatusGroupedText(t *testing.T) {
+func TestDojoAlertsStatusTitleList(t *testing.T) {
 	tmpl, err := FromGlobs()
 	require.NoError(t, err)
 
@@ -923,8 +923,8 @@ func TestDojoAlertsStatusGroupedText(t *testing.T) {
 		fail bool
 	}{
 		{
-			title: "dojo.alerts.status_grouped_text with firing & resolved",
-			in:    `{{ template "dojo.alerts.status_grouped_text" .Alerts }}`,
+			title: "dojo.alerts.status_title_list with firing & resolved",
+			in:    `{{ template "dojo.alerts.status_title_list" .Alerts }}`,
 			data: Data{
 				Alerts: Alerts{
 					{
@@ -933,10 +933,6 @@ func TestDojoAlertsStatusGroupedText(t *testing.T) {
 							"alertname": "AlertName1",
 							"label1":    "value1",
 							"label2":    "value2",
-						},
-						Annotations: KV{
-							"annotation1": "value1",
-							"annotation2": "value2",
 						},
 						GeneratorURL: "http://generator.url/",
 					},
@@ -946,33 +942,21 @@ func TestDojoAlertsStatusGroupedText(t *testing.T) {
 							"label1": "value1",
 							"label2": "value2",
 						},
-						Annotations: KV{
-							"annotation1": "value1",
-							"annotation2": "value2",
-						},
 						GeneratorURL: "http://generator.url/",
 					},
 				},
 			},
 			exp: "FIRING:\n" +
 				"\n" +
-				"[AlertName1] (label1=value1 label2=value2)\n" +
-				"Annotations:\n" +
-				"annotation1: value1\n" +
-				"annotation2: value2\n" +
-				"http://generator.url/\n" +
+				"- [AlertName1] (label1=value1 label2=value2)\n" +
 				"\n" +
 				"RESOLVED:\n" +
 				"\n" +
-				"(label1=value1 label2=value2)\n" +
-				"Annotations:\n" +
-				"annotation1: value1\n" +
-				"annotation2: value2\n" +
-				"http://generator.url/",
+				"- (label1=value1 label2=value2)",
 		},
 		{
-			title: "dojo.alerts.status_grouped_text with only firing",
-			in:    `{{ template "dojo.alerts.status_grouped_text" .Alerts }}`,
+			title: "dojo.alerts.status_title_list with only firing",
+			in:    `{{ template "dojo.alerts.status_title_list" .Alerts }}`,
 			data: Data{
 				Alerts: Alerts{
 					{
@@ -982,10 +966,6 @@ func TestDojoAlertsStatusGroupedText(t *testing.T) {
 							"label1":    "value1",
 							"label2":    "value2",
 						},
-						Annotations: KV{
-							"annotation1": "value1",
-							"annotation2": "value2",
-						},
 						GeneratorURL: "http://generator.url/",
 					},
 					{
@@ -994,25 +974,43 @@ func TestDojoAlertsStatusGroupedText(t *testing.T) {
 							"label1": "value1",
 							"label2": "value2",
 						},
-						Annotations: KV{
-							"annotation1": "value1",
-							"annotation2": "value2",
+						GeneratorURL: "http://generator.url/",
+					},
+				},
+			},
+			exp: "FIRING:\n" +
+				"\n" +
+				"- [AlertName1] (label1=value1 label2=value2)\n" +
+				"- (label1=value1 label2=value2)",
+		},
+		{
+			title: "dojo.alerts.status_title_list with only resolved",
+			in:    `{{ template "dojo.alerts.status_title_list" .Alerts }}`,
+			data: Data{
+				Alerts: Alerts{
+					{
+						Status: "resolved",
+						Labels: KV{
+							"alertname": "AlertName1",
+							"label1":    "value1",
+							"label2":    "value2",
+						},
+						GeneratorURL: "http://generator.url/",
+					},
+					{
+						Status: "resolved",
+						Labels: KV{
+							"label1": "value1",
+							"label2": "value2",
 						},
 						GeneratorURL: "http://generator.url/",
 					},
 				},
 			},
-			exp: "[AlertName1] (label1=value1 label2=value2)\n" +
-				"Annotations:\n" +
-				"annotation1: value1\n" +
-				"annotation2: value2\n" +
-				"http://generator.url/\n" +
+			exp: "RESOLVED:\n" +
 				"\n" +
-				"(label1=value1 label2=value2)\n" +
-				"Annotations:\n" +
-				"annotation1: value1\n" +
-				"annotation2: value2\n" +
-				"http://generator.url/",
+				"- [AlertName1] (label1=value1 label2=value2)\n" +
+				"- (label1=value1 label2=value2)",
 		},
 	} {
 		tc := tc

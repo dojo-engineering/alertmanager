@@ -136,9 +136,9 @@
     {{- end -}}
 {{- end -}}
 
-{{- /* dojo.alerts.details(Alerts) */ -}}
+{{- /* dojo.alerts.details_list(Alerts) */ -}}
 {{- /* Textual representation of a list of Alerts. */ -}}
-{{- define "dojo.alerts.details" -}}
+{{- define "dojo.alerts.details_list" -}}
     {{- with . -}}
         {{- with index . 0 -}}
             {{- template "dojo.alert.details" . -}}
@@ -152,28 +152,23 @@
     {{- end -}}
 {{- end -}}
 
-{{- /* dojo.alerts.status_grouped_text(Alerts) */ -}}
+{{- /* dojo.alerts.status_title_list(Alerts) */ -}}
 {{- /* Textual representation of a list of Alerts with status */ -}}
 {{- /* (firing / resolved) grouping. */ -}}
 {{- /* See also: dojo.alert.details */ -}}
 {{- /* See also: dojo.alerts.details */ -}}
-{{- define "dojo.alerts.status_grouped_text" -}}
-    {{- if and (gt (len .Firing) 0) (gt (len .Resolved) 0)  }}
-        {{- $alerts := . -}}
-        {{- with .Firing -}}
-            {{- "FIRING:\n\n" -}}
-            {{- template "dojo.alerts.details" . -}}
+{{- define "dojo.alerts.status_title_list" -}}
+    {{- $alerts := . -}}
+    {{- with .Firing -}}
+        {{- "FIRING:\n\n" -}}
+        {{- template "dojo.alerts.title_list" . -}}
+    {{- end -}}
+    {{- with .Resolved -}}
+        {{- with $alerts.Firing -}}
+            {{- "\n\n" -}}
         {{- end -}}
-        {{- with .Resolved -}}
-            {{- with $alerts.Firing -}}
-                {{- "\n\n" -}}
-            {{- end -}}
-            {{- "RESOLVED:\n\n" -}}
-            {{- template "dojo.alerts.details" . -}}
-        {{- end -}}
-    {{- else -}}
-        {{- template "dojo.alerts.details" .Firing -}}
-        {{- template "dojo.alerts.details" .Resolved -}}
+        {{- "RESOLVED:\n\n" -}}
+        {{- template "dojo.alerts.title_list" . -}}
     {{- end -}}
 {{- end -}}
 
