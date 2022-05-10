@@ -392,6 +392,82 @@ func TestTemplateExpansion(t *testing.T) {
 	}
 }
 
+func TestDojoEmoji(t *testing.T) {
+	tmpl, err := FromGlobs()
+	require.NoError(t, err)
+
+	for _, tc := range []struct {
+		title string
+		in    string
+		data  interface{}
+
+		exp  string
+		fail bool
+	}{
+		{
+			title: "dojo.emoji with firing high urgency alerts",
+			in:    `{{ template "dojo.emoji" . }}`,
+			data: Data{
+				Status: "firing",
+				CommonLabels: KV{
+					"urgency": "high",
+				},
+			},
+			exp: "💥",
+		},
+		{
+			title: "dojo.emoji with firing low urgency alerts",
+			in:    `{{ template "dojo.emoji" . }}`,
+			data: Data{
+				Status: "firing",
+				CommonLabels: KV{
+					"urgency": "low",
+				},
+			},
+			exp: "⚠️",
+		},
+		{
+			title: "dojo.emoji with firing bad urgency alerts",
+			in:    `{{ template "dojo.emoji" . }}`,
+			data: Data{
+				Status: "firing",
+				CommonLabels: KV{
+					"urgency": "bad",
+				},
+			},
+			exp: "💩",
+		},
+		{
+			title: "dojo.emoji with firing no urgency alerts",
+			in:    `{{ template "dojo.emoji" . }}`,
+			data: Data{
+				Status: "firing",
+			},
+			exp: "💩",
+		},
+		{
+			title: "dojo.emoji with non firing alerts",
+			in:    `{{ template "dojo.emoji" . }}`,
+			data: Data{
+				Status: "resolved",
+			},
+			exp: "👌",
+		},
+	} {
+		tc := tc
+		t.Run(tc.title, func(t *testing.T) {
+			f := tmpl.ExecuteTextString
+			got, err := f(globalDojoTemplate+tc.in, tc.data)
+			if tc.fail {
+				require.NotNil(t, err)
+				return
+			}
+			require.NoError(t, err)
+			require.Equal(t, tc.exp, got)
+		})
+	}
+}
+
 func TestDojoSubjectStableText(t *testing.T) {
 	tmpl, err := FromGlobs()
 	require.NoError(t, err)
@@ -1138,55 +1214,6 @@ func TestDojoSlack(t *testing.T) {
 		exp  string
 		fail bool
 	}{
-		{
-			title: "dojo.slack.icon_emoji with firing high urgency alerts",
-			in:    `{{ template "dojo.slack.icon_emoji" . }}`,
-			data: Data{
-				Status: "firing",
-				CommonLabels: KV{
-					"urgency": "high",
-				},
-			},
-			exp: ":boom:",
-		},
-		{
-			title: "dojo.slack.icon_emoji with firing low urgency alerts",
-			in:    `{{ template "dojo.slack.icon_emoji" . }}`,
-			data: Data{
-				Status: "firing",
-				CommonLabels: KV{
-					"urgency": "low",
-				},
-			},
-			exp: ":warning:",
-		},
-		{
-			title: "dojo.slack.icon_emoji with firing bad urgency alerts",
-			in:    `{{ template "dojo.slack.icon_emoji" . }}`,
-			data: Data{
-				Status: "firing",
-				CommonLabels: KV{
-					"urgency": "bad",
-				},
-			},
-			exp: ":shit:",
-		},
-		{
-			title: "dojo.slack.icon_emoji with firing no urgency alerts",
-			in:    `{{ template "dojo.slack.icon_emoji" . }}`,
-			data: Data{
-				Status: "firing",
-			},
-			exp: ":shit:",
-		},
-		{
-			title: "dojo.slack.icon_emoji with non firing alerts",
-			in:    `{{ template "dojo.slack.icon_emoji" . }}`,
-			data: Data{
-				Status: "resolved",
-			},
-			exp: ":ok_hand:",
-		},
 		{
 			title: "dojo.slack.fallback",
 			in:    `{{ template "dojo.slack.fallback" . }}`,

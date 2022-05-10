@@ -1,3 +1,23 @@
+{{- /* dojo.emoji(Data) */ -}}
+{{- /* An emoji as a function of firing alerts and the urgency. */ -}}
+{{- define "dojo.emoji" -}}
+    {{- if eq .Status "firing" -}}
+        {{- with .CommonLabels.urgency -}}
+            {{- if eq . "high" -}}
+                {{- "💥" -}}
+            {{- else if eq . "low" -}}
+                {{- "⚠️" -}}
+            {{- else -}}
+                {{- "💩" -}}
+            {{- end -}}
+        {{- else -}}
+            {{- "💩" -}}
+        {{- end -}}
+    {{- else -}}
+        {{ "👌" }}
+    {{- end -}}
+{{- end -}}
+
 {{- /* dojo.subject.stable_text(Data) */ -}}
 {{- /* This provides a stable subject value that is only a function of the static */ -}}
 {{- /* values used to group the alerts being notified (GroupLabels). */ -}}
@@ -261,26 +281,6 @@
     {{- "The immediate action, is to evaluate the real urgency of the firing alert(s) and work on it accordingly.\n" -}}
     {{- "\n" -}}
     {{- "The secondary action, is to fix the alert configuration so that it fires with a correctly defined urgency next time." -}}
-{{- end -}}
-
-{{- /* dojo.slack.icon_emoji(Data) */ -}}
-{{- /* Emoji for Slack notifications. */ -}}
-{{- define "dojo.slack.icon_emoji" -}}
-    {{- if eq .Status "firing" -}}
-        {{- with .CommonLabels.urgency -}}
-            {{- if eq . "high" -}}
-                {{- ":boom:" -}}
-            {{- else if eq . "low" -}}
-                {{- ":warning:" -}}
-            {{- else -}}
-                {{- ":shit:" -}}
-            {{- end -}}
-        {{- else -}}
-            {{- ":shit:" -}}
-        {{- end -}}
-    {{- else -}}
-        {{ ":ok_hand:" }}
-    {{- end -}}
 {{- end -}}
 
 {{- /* dojo.slack.fallback(Data) */ -}}
