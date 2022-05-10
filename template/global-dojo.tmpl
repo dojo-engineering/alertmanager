@@ -1,3 +1,21 @@
+{{- /* dojo.grafana.url */ -}}
+{{- /* URL for the grafana instance. */ -}}
+{{- define "dojo.grafana.url" -}}
+    {{- "https://example.grafana.net/" -}}
+{{- end -}}
+
+{{- /* dojo.grafana.alerting.list.data_source */ -}}
+{{- /* Data source for alert list (alerting/list?dataSource=XXX). */ -}}
+{{- define "dojo.grafana.alerting.list.data_source" -}}
+    {{- "DATASOURCE_NAME" -}}
+{{- end -}}
+
+{{- /* dojo.grafana.alerting.alertmanager */ -}}
+{{- /* AlertManager instance (silences?alertmanager=XXX). */ -}}
+{{- define "dojo.grafana.alerting.alertmanager" -}}
+    {{- "ALERTMANAGER_NAME" -}}
+{{- end -}}
+
 {{- /* dojo.emoji(Data) */ -}}
 {{- /* An emoji as a function of firing alerts and the urgency. */ -}}
 {{- define "dojo.emoji" -}}
@@ -181,8 +199,8 @@
 {{- /* dojo.alerts.url.firing(Data) */ -}}
 {{- /* URL that points to Grafana Labs list of firing alerts. */ -}}
 {{- define "dojo.alerts.url.firing" -}}
-    {{- "https://paymentsense.grafana.net/alerting/list?" }}
-        {{- "dataSource=DATASOURCE_NAME" -}}
+    {{- template "dojo.grafana.url" -}}{{- "alerting/list?" }}
+        {{- "dataSource=" -}}{{- template "dojo.grafana.alerting.list.data_source" -}}
         {{- "&queryString=" -}}
             {{- /* tenant is a mandatory field for all configured alerts, */ -}}
             {{- /* validated by CI so it is guaranteed to exist at CommonLabels */ -}}
@@ -212,9 +230,9 @@
 {{- /* dojo.alerts.url.history(Data) */ -}}
 {{- /* URL that points to a Grafana Labs Dashboard with the history of alerts */ -}}
 {{- define "dojo.alerts.url.history" -}}
-    {{- "https://paymentsense.grafana.net/d/luyBQ9Y7z/?" -}}
+    {{- template "dojo.grafana.url" -}}{{- "d/luyBQ9Y7z/?" -}}
         {{- "orgId=1&" -}}
-        {{- "var-data_source=DATASOURCE_NAME&" -}}
+        {{- "var-data_source=" -}}{{- template "dojo.grafana.alerting.list.data_source" -}}{{- "&" -}}
         {{- /* tenant is a mandatory field for all configured alerts, */ -}}
         {{- /* validated by CI so it is guaranteed to exist at CommonLabels */ -}}
         {{- "var-tenant=" -}}{{- .CommonLabels.tenant | urlquery -}}{{- "&" -}}
@@ -251,8 +269,8 @@
 {{- /* URL that points to a Grafana Labs page where a silence to all matching */ -}}
 {{- /* alerts can be added */ -}}
 {{- define "dojo.alerts.url.new_silence" -}}
-    {{- "https://paymentsense.grafana.net/alerting/silence/new?" -}}
-        {{- "alertmanager=ALERTMANAGER_NAME&" -}}
+    {{- template "dojo.grafana.url" -}}{{- "alerting/silence/new?" -}}
+        {{- "alertmanager=" -}}{{- template "dojo.grafana.alerting.alertmanager" -}}{{- "&" -}}
         {{- /* tenant is a mandatory field for all configured alerts, */ -}}
         {{- /* validated by CI so it is guaranteed to exist at CommonLabels */ -}}
         {{- "matcher=tenant%3D" -}}{{- .CommonLabels.tenant | urlquery -}}{{- "&" -}}

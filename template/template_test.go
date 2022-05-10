@@ -1055,7 +1055,7 @@ func TestDojoAlertsUrlFiring(t *testing.T) {
 					"be":        "used",
 				},
 			},
-			exp: "https://paymentsense.grafana.net/alerting/list?" +
+			exp: "https://example.grafana.net/alerting/list?" +
 				"dataSource=DATASOURCE_NAME&" +
 				"queryString=" +
 				"tenant%3Dexample," +
@@ -1079,7 +1079,7 @@ func TestDojoAlertsUrlFiring(t *testing.T) {
 					"be":        "used",
 				},
 			},
-			exp: "https://paymentsense.grafana.net/alerting/list?" +
+			exp: "https://example.grafana.net/alerting/list?" +
 				"dataSource=DATASOURCE_NAME&" +
 				"queryString=" +
 				"tenant%3Dexample," +
@@ -1100,7 +1100,7 @@ func TestDojoAlertsUrlFiring(t *testing.T) {
 					"be":        "used",
 				},
 			},
-			exp: "https://paymentsense.grafana.net/alerting/list?" +
+			exp: "https://example.grafana.net/alerting/list?" +
 				"dataSource=DATASOURCE_NAME&" +
 				"queryString=" +
 				"tenant%3Dexample," +
@@ -1151,7 +1151,7 @@ func TestDojoAlertsUrlHistory(t *testing.T) {
 					"be":        "used",
 				},
 			},
-			exp: "https://paymentsense.grafana.net/d/luyBQ9Y7z/?orgId=1&" +
+			exp: "https://example.grafana.net/d/luyBQ9Y7z/?orgId=1&" +
 				"var-data_source=DATASOURCE_NAME&" +
 				"var-tenant=example&" +
 				"var-urgency=high&" +
@@ -1172,7 +1172,7 @@ func TestDojoAlertsUrlHistory(t *testing.T) {
 					"be":        "used",
 				},
 			},
-			exp: "https://paymentsense.grafana.net/d/luyBQ9Y7z/?orgId=1&" +
+			exp: "https://example.grafana.net/d/luyBQ9Y7z/?orgId=1&" +
 				"var-data_source=DATASOURCE_NAME&" +
 				"var-tenant=example&" +
 				"var-label=urgency%7C!~%7C%5E(high__gfp__low)$&" +
@@ -1190,7 +1190,7 @@ func TestDojoAlertsUrlHistory(t *testing.T) {
 					"be":        "used",
 				},
 			},
-			exp: "https://paymentsense.grafana.net/d/luyBQ9Y7z/?orgId=1&" +
+			exp: "https://example.grafana.net/d/luyBQ9Y7z/?orgId=1&" +
 				"var-data_source=DATASOURCE_NAME&" +
 				"var-tenant=example&" +
 				"var-urgency=high&",
@@ -1238,7 +1238,7 @@ func TestDojoAlertsUrlNewSilence(t *testing.T) {
 					"be":        "used",
 				},
 			},
-			exp: "https://paymentsense.grafana.net/alerting/silence/new?" +
+			exp: "https://example.grafana.net/alerting/silence/new?" +
 				"alertmanager=ALERTMANAGER_NAME&" +
 				"matcher=tenant%3Dexample&" +
 				"matcher=urgency%3Dhigh&" +
@@ -1259,7 +1259,7 @@ func TestDojoAlertsUrlNewSilence(t *testing.T) {
 					"be":        "used",
 				},
 			},
-			exp: "https://paymentsense.grafana.net/alerting/silence/new?" +
+			exp: "https://example.grafana.net/alerting/silence/new?" +
 				"alertmanager=ALERTMANAGER_NAME&" +
 				"matcher=tenant%3Dexample&" +
 				"matcher=urgency!~%5E(high|low)$&" +
@@ -1277,7 +1277,7 @@ func TestDojoAlertsUrlNewSilence(t *testing.T) {
 					"be":        "used",
 				},
 			},
-			exp: "https://paymentsense.grafana.net/alerting/silence/new?" +
+			exp: "https://example.grafana.net/alerting/silence/new?" +
 				"alertmanager=ALERTMANAGER_NAME&" +
 				"matcher=tenant%3Dexample&" +
 				"matcher=urgency%3Dhigh&",
@@ -1456,7 +1456,7 @@ func TestDojoSlack(t *testing.T) {
 					"urgency": "low",
 				},
 			},
-			exp: "example: low urgency alerts firing | https://paymentsense.grafana.net/alerting/list?dataSource=DATASOURCE_NAME&queryString=tenant%3Dexample,urgency%3Dlow,&ruleType=alerting&alertState=firing",
+			exp: "example: low urgency alerts firing | https://example.grafana.net/alerting/list?dataSource=DATASOURCE_NAME&queryString=tenant%3Dexample,urgency%3Dlow,&ruleType=alerting&alertState=firing",
 		},
 		{
 			title: "dojo.slack.color with firing high urgency alerts",
