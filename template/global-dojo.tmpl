@@ -108,8 +108,15 @@
 {{- /* dojo.alerts.title_list(Alerts) */ -}}
 {{- /* List of alert titles. */ -}}
 {{- define "dojo.alerts.title_list" -}}
-    {{- range . -}}
-        {{- "- " }}{{- template "dojo.alert.details" . -}}{{- "\n" }}
+    {{- with . -}}
+        {{- with index . 0 -}}
+            {{- "- " }}{{- template "dojo.alert.title" . -}}
+        {{- end -}}
+        {{- with slice . 1 -}}
+            {{- range . -}}
+                {{- "\n- " }}{{- template "dojo.alert.title" . -}}
+            {{- end -}}
+        {{- end -}}
     {{- end -}}
 {{- end -}}
 

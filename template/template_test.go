@@ -660,7 +660,23 @@ func TestDojoAlertsTitleList(t *testing.T) {
 		fail bool
 	}{
 		{
-			title: "dojo.alert.title",
+			title: "dojo.alert.title with single alert",
+			in:    `{{ template "dojo.alerts.title_list" .Alerts }}`,
+			data: Data{
+				Alerts: Alerts{
+					Alert{
+						Labels: KV{
+							"alertname": "AlertName",
+							"label1":    "value1",
+							"label2":    "value2",
+						},
+					},
+				},
+			},
+			exp: "- [AlertName] (label1=value1 label2=value2)",
+		},
+		{
+			title: "dojo.alert.title with multiple alerts",
 			in:    `{{ template "dojo.alerts.title_list" .Alerts }}`,
 			data: Data{
 				Alerts: Alerts{
@@ -679,7 +695,7 @@ func TestDojoAlertsTitleList(t *testing.T) {
 				},
 			},
 			exp: "- [AlertName] (label1=value1 label2=value2)\n" +
-				"- [AlertName]\n",
+				"- [AlertName]",
 		},
 	} {
 		tc := tc
