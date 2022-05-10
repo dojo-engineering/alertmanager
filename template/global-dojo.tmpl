@@ -160,14 +160,14 @@
 {{- define "dojo.alerts.status_title_list" -}}
     {{- $alerts := . -}}
     {{- with .Firing -}}
-        {{- "FIRING:\n\n" -}}
+        {{- "🔥 FIRING:\n\n" -}}
         {{- template "dojo.alerts.title_list" . -}}
     {{- end -}}
     {{- with .Resolved -}}
         {{- with $alerts.Firing -}}
             {{- "\n\n" -}}
         {{- end -}}
-        {{- "RESOLVED:\n\n" -}}
+        {{- "👌 RESOLVED:\n\n" -}}
         {{- template "dojo.alerts.title_list" . -}}
     {{- end -}}
 {{- end -}}

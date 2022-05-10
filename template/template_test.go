@@ -946,11 +946,11 @@ func TestDojoAlertsStatusTitleList(t *testing.T) {
 					},
 				},
 			},
-			exp: "FIRING:\n" +
+			exp: "🔥 FIRING:\n" +
 				"\n" +
 				"- [AlertName1] (label1=value1 label2=value2)\n" +
 				"\n" +
-				"RESOLVED:\n" +
+				"👌 RESOLVED:\n" +
 				"\n" +
 				"- (label1=value1 label2=value2)",
 		},
@@ -978,7 +978,7 @@ func TestDojoAlertsStatusTitleList(t *testing.T) {
 					},
 				},
 			},
-			exp: "FIRING:\n" +
+			exp: "🔥 FIRING:\n" +
 				"\n" +
 				"- [AlertName1] (label1=value1 label2=value2)\n" +
 				"- (label1=value1 label2=value2)",
@@ -1007,7 +1007,7 @@ func TestDojoAlertsStatusTitleList(t *testing.T) {
 					},
 				},
 			},
-			exp: "RESOLVED:\n" +
+			exp: "👌 RESOLVED:\n" +
 				"\n" +
 				"- [AlertName1] (label1=value1 label2=value2)\n" +
 				"- (label1=value1 label2=value2)",
