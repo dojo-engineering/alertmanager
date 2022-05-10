@@ -647,7 +647,7 @@ func TestDojoAlertTitle(t *testing.T) {
 	}
 }
 
-func TestDojoAlertText(t *testing.T) {
+func TestDojoAlertsTitleList(t *testing.T) {
 	tmpl, err := FromGlobs()
 	require.NoError(t, err)
 
@@ -660,8 +660,57 @@ func TestDojoAlertText(t *testing.T) {
 		fail bool
 	}{
 		{
-			title: "dojo.alert.text with alertname and labels",
-			in:    `{{ template "dojo.alert.text" (index .Alerts 0) }}`,
+			title: "dojo.alert.title",
+			in:    `{{ template "dojo.alerts.title_list" .Alerts }}`,
+			data: Data{
+				Alerts: Alerts{
+					Alert{
+						Labels: KV{
+							"alertname": "AlertName",
+							"label1":    "value1",
+							"label2":    "value2",
+						},
+					},
+					Alert{
+						Labels: KV{
+							"alertname": "AlertName",
+						},
+					},
+				},
+			},
+			exp: "- [AlertName] (label1=value1 label2=value2)\n" +
+				"- [AlertName]\n",
+		},
+	} {
+		tc := tc
+		t.Run(tc.title, func(t *testing.T) {
+			f := tmpl.ExecuteTextString
+			got, err := f(globalDojoTemplate+tc.in, tc.data)
+			if tc.fail {
+				require.NotNil(t, err)
+				return
+			}
+			require.NoError(t, err)
+			require.Equal(t, tc.exp, got)
+		})
+	}
+}
+
+func TestDojoAlertDetails(t *testing.T) {
+	tmpl, err := FromGlobs()
+	require.NoError(t, err)
+
+	for _, tc := range []struct {
+		title string
+		in    string
+		data  interface{}
+
+		exp  string
+		fail bool
+	}{
+		{
+			title: "dojo.alert.details with alertname and labels",
+			in:    `{{ template "dojo.alert.details" (index .Alerts 0) }}`,
 			data: Data{
 				Alerts: Alerts{
 					{
@@ -686,8 +735,8 @@ func TestDojoAlertText(t *testing.T) {
 				"http://generator.url/",
 		},
 		{
-			title: "dojo.alert.text with alertname and no extra labels",
-			in:    `{{ template "dojo.alert.text" (index .Alerts 0) }}`,
+			title: "dojo.alert.details with alertname and no extra labels",
+			in:    `{{ template "dojo.alert.details" (index .Alerts 0) }}`,
 			data: Data{
 				Alerts: Alerts{
 					{
@@ -710,8 +759,8 @@ func TestDojoAlertText(t *testing.T) {
 				"http://generator.url/",
 		},
 		{
-			title: "dojo.alert.text without alertname and labels",
-			in:    `{{ template "dojo.alert.text" (index .Alerts 0) }}`,
+			title: "dojo.alert.details without alertname and labels",
+			in:    `{{ template "dojo.alert.details" (index .Alerts 0) }}`,
 			data: Data{
 				Alerts: Alerts{
 					{
@@ -749,7 +798,7 @@ func TestDojoAlertText(t *testing.T) {
 	}
 }
 
-func TestDojoAlertsTitleList(t *testing.T) {
+func TestDojoAlertsDetails(t *testing.T) {
 	tmpl, err := FromGlobs()
 	require.NoError(t, err)
 
@@ -762,28 +811,74 @@ func TestDojoAlertsTitleList(t *testing.T) {
 		fail bool
 	}{
 		{
-			title: "dojo.alert.title",
-			in:    `{{ template "dojo.alerts.title_list" .Alerts }}`,
+			title: "dojo.alerts.details with one alert",
+			in:    `{{ template "dojo.alerts.details" .Alerts }}`,
 			data: Data{
 				Alerts: Alerts{
 					Alert{
+						Status: "firing",
 						Labels: KV{
 							"alertname": "AlertName",
 							"label1":    "value1",
 							"label2":    "value2",
 						},
-					},
-					Alert{
-						Labels: KV{
-							"alertname": "AlertName",
+						Annotations: KV{
+							"annotation1": "value1",
+							"annotation2": "value2",
 						},
+						GeneratorURL: "http://generator.url/",
 					},
 				},
 			},
-			exp: "- [AlertName] (label1=value1 label2=value2)\n" +
-			"- [AlertName]\n",
+			exp: "[AlertName] (label1=value1 label2=value2)\n" +
+				"Annotations:\n" +
+				"annotation1: value1\n" +
+				"annotation2: value2\n" +
+				"http://generator.url/",
 		},
-
+		{
+			title: "dojo.alerts.details with multiple alerts",
+			in:    `{{ template "dojo.alerts.details" .Alerts }}`,
+			data: Data{
+				Alerts: Alerts{
+					Alert{
+						Status: "firing",
+						Labels: KV{
+							"alertname": "AlertName",
+							"label1":    "value1",
+							"label2":    "value2",
+						},
+						Annotations: KV{
+							"annotation1": "value1",
+							"annotation2": "value2",
+						},
+						GeneratorURL: "http://generator.url/",
+					},
+					Alert{
+						Status: "firing",
+						Labels: KV{
+							"alertname": "AlertName",
+						},
+						Annotations: KV{
+							"annotation1": "value1",
+							"annotation2": "value2",
+						},
+						GeneratorURL: "http://generator.url/",
+					},
+				},
+			},
+			exp: "[AlertName] (label1=value1 label2=value2)\n" +
+				"Annotations:\n" +
+				"annotation1: value1\n" +
+				"annotation2: value2\n" +
+				"http://generator.url/\n" +
+				"\n" +
+				"[AlertName]\n" +
+				"Annotations:\n" +
+				"annotation1: value1\n" +
+				"annotation2: value2\n" +
+				"http://generator.url/",
+		},
 	} {
 		tc := tc
 		t.Run(tc.title, func(t *testing.T) {

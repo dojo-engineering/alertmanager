@@ -28,6 +28,8 @@
 {{- /* Having a stable subject is good for use cases where the grouped alerts state */ -}}
 {{- /* is to me synchronised with another system (eg: PagerDuty), and we */ -}}
 {{- /* want to prevent a stale subject from misleading people. */ -}}
+{{- /* It also makes use of standard labels tenant and urgency, expected */ -}}
+{{- /* to universally exist. */ -}}
 {{- /* Examples: */ -}}
 {{- /* "Alerts for $receiver" */ -}}
 {{- /* "[$alertname_value] ($group_label_key=$group_label_value)" */ -}}
@@ -103,10 +105,18 @@
     {{- end -}}
 {{- end -}}
 
-{{- /* dojo.alert.text(Alert) */ -}}
+{{- /* dojo.alerts.title_list(Alerts) */ -}}
+{{- /* List of alert titles. */ -}}
+{{- define "dojo.alerts.title_list" -}}
+    {{- range . -}}
+        {{- "- " }}{{- template "dojo.alert.details" . -}}{{- "\n" }}
+    {{- end -}}
+{{- end -}}
+
+{{- /* dojo.alert.details(Alert) */ -}}
 {{- /* Textual representation of the Alert with its labels, annotations and */ -}}
 {{- /* link. */ -}}
-{{- define "dojo.alert.text" -}}
+{{- define "dojo.alert.details" -}}
     {{- template "dojo.alert.title" . -}}
     {{- with .Annotations.SortedPairs -}}
         {{- "\nAnnotations:" -}}
@@ -119,54 +129,44 @@
     {{- end -}}
 {{- end -}}
 
-{{- /* dojo.alerts.text(Alerts) */ -}}
+{{- /* dojo.alerts.details(Alerts) */ -}}
 {{- /* Textual representation of a list of Alerts. */ -}}
-{{- /* See also: dojo.alert.text */ -}}
-{{- /* See also: dojo.alerts.status_grouped_text */ -}}
-{{- define "dojo.alerts.text" -}}
+{{- define "dojo.alerts.details" -}}
     {{- with . -}}
         {{- with index . 0 -}}
-            {{- template "dojo.alert.text" . -}}
+            {{- template "dojo.alert.details" . -}}
         {{- end -}}
         {{- with slice . 1 -}}
             {{- range . -}}
                 {{- "\n\n" }}
-                {{- template "dojo.alert.text" . -}}
+                {{- template "dojo.alert.details" . -}}
             {{- end -}}
         {{- end -}}
-    {{- end -}}
-{{- end -}}
-
-{{- /* dojo.alerts.title_list(Alerts) */ -}}
-{{- /* List of alert titles. */ -}}
-{{- define "dojo.alerts.title_list" -}}
-    {{- range . -}}
-        {{- "- " }}{{- template "dojo.alert.text" . -}}{{- "\n" }}
     {{- end -}}
 {{- end -}}
 
 {{- /* dojo.alerts.status_grouped_text(Alerts) */ -}}
 {{- /* Textual representation of a list of Alerts with status */ -}}
 {{- /* (firing / resolved) grouping. */ -}}
-{{- /* See also: dojo.alert.text */ -}}
-{{- /* See also: dojo.alerts.text */ -}}
+{{- /* See also: dojo.alert.details */ -}}
+{{- /* See also: dojo.alerts.details */ -}}
 {{- define "dojo.alerts.status_grouped_text" -}}
     {{- if and (gt (len .Firing) 0) (gt (len .Resolved) 0)  }}
         {{- $alerts := . -}}
         {{- with .Firing -}}
             {{- "FIRING:\n\n" -}}
-            {{- template "dojo.alerts.text" . -}}
+            {{- template "dojo.alerts.details" . -}}
         {{- end -}}
         {{- with .Resolved -}}
             {{- with $alerts.Firing -}}
                 {{- "\n\n" -}}
             {{- end -}}
             {{- "RESOLVED:\n\n" -}}
-            {{- template "dojo.alerts.text" . -}}
+            {{- template "dojo.alerts.details" . -}}
         {{- end -}}
     {{- else -}}
-        {{- template "dojo.alerts.text" .Firing -}}
-        {{- template "dojo.alerts.text" .Resolved -}}
+        {{- template "dojo.alerts.details" .Firing -}}
+        {{- template "dojo.alerts.details" .Resolved -}}
     {{- end -}}
 {{- end -}}
 
