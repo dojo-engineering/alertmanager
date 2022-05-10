@@ -137,6 +137,14 @@
     {{- end -}}
 {{- end -}}
 
+{{- /* dojo.alerts.title_list(Alerts) */ -}}
+{{- /* List of alert titles. */ -}}
+{{- define "dojo.alerts.title_list" -}}
+    {{- range . -}}
+        {{- "- " }}{{- template "dojo.alert.text" . -}}{{- "\n" }}
+    {{- end -}}
+{{- end -}}
+
 {{- /* dojo.alerts.status_grouped_text(Alerts) */ -}}
 {{- /* Textual representation of a list of Alerts with status */ -}}
 {{- /* (firing / resolved) grouping. */ -}}

@@ -749,6 +749,56 @@ func TestDojoAlertText(t *testing.T) {
 	}
 }
 
+func TestDojoAlertsTitleList(t *testing.T) {
+	tmpl, err := FromGlobs()
+	require.NoError(t, err)
+
+	for _, tc := range []struct {
+		title string
+		in    string
+		data  interface{}
+
+		exp  string
+		fail bool
+	}{
+		{
+			title: "dojo.alert.title",
+			in:    `{{ template "dojo.alerts.title_list" .Alerts }}`,
+			data: Data{
+				Alerts: Alerts{
+					Alert{
+						Labels: KV{
+							"alertname": "AlertName",
+							"label1":    "value1",
+							"label2":    "value2",
+						},
+					},
+					Alert{
+						Labels: KV{
+							"alertname": "AlertName",
+						},
+					},
+				},
+			},
+			exp: "- [AlertName] (label1=value1 label2=value2)\n" +
+			"- [AlertName]\n",
+		},
+
+	} {
+		tc := tc
+		t.Run(tc.title, func(t *testing.T) {
+			f := tmpl.ExecuteTextString
+			got, err := f(globalDojoTemplate+tc.in, tc.data)
+			if tc.fail {
+				require.NotNil(t, err)
+				return
+			}
+			require.NoError(t, err)
+			require.Equal(t, tc.exp, got)
+		})
+	}
+}
+
 func TestDojoAlertsStatusGroupedText(t *testing.T) {
 	tmpl, err := FromGlobs()
 	require.NoError(t, err)
