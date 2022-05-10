@@ -575,6 +575,78 @@ func TestDojoSubjectStableText(t *testing.T) {
 	}
 }
 
+func TestDojoAlertTitle(t *testing.T) {
+	tmpl, err := FromGlobs()
+	require.NoError(t, err)
+
+	for _, tc := range []struct {
+		title string
+		in    string
+		data  interface{}
+
+		exp  string
+		fail bool
+	}{
+		{
+			title: "dojo.alert.title with alertname and labels",
+			in:    `{{ template "dojo.alert.title" (index .Alerts 0) }}`,
+			data: Data{
+				Alerts: Alerts{
+					{
+						Labels: KV{
+							"alertname": "AlertName",
+							"label1":    "value1",
+							"label2":    "value2",
+						},
+					},
+				},
+			},
+			exp: "[AlertName] (label1=value1 label2=value2)",
+		},
+		{
+			title: "dojo.alert.title with alertname and no extra labels",
+			in:    `{{ template "dojo.alert.title" (index .Alerts 0) }}`,
+			data: Data{
+				Alerts: Alerts{
+					{
+						Labels: KV{
+							"alertname": "AlertName",
+						},
+					},
+				},
+			},
+			exp: "[AlertName]",
+		},
+		{
+			title: "dojo.alert.title without alertname and labels",
+			in:    `{{ template "dojo.alert.title" (index .Alerts 0) }}`,
+			data: Data{
+				Alerts: Alerts{
+					{
+						Labels: KV{
+							"label1": "value1",
+							"label2": "value2",
+						},
+					},
+				},
+			},
+			exp: "(label1=value1 label2=value2)",
+		},
+	} {
+		tc := tc
+		t.Run(tc.title, func(t *testing.T) {
+			f := tmpl.ExecuteTextString
+			got, err := f(globalDojoTemplate+tc.in, tc.data)
+			if tc.fail {
+				require.NotNil(t, err)
+				return
+			}
+			require.NoError(t, err)
+			require.Equal(t, tc.exp, got)
+		})
+	}
+}
+
 func TestDojoAlertText(t *testing.T) {
 	tmpl, err := FromGlobs()
 	require.NoError(t, err)

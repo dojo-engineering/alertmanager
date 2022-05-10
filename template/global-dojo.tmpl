@@ -71,13 +71,11 @@
     {{- end -}}
 {{- end -}}
 
-{{- /* dojo.alert.text(Alert) */ -}}
-{{- /* Textual representation of the Alert with: */ -}}
-{{- /* - A descriptive "alert name": */ -}}
-{{- /*   - "[$alertname_value] ($label=$value)" when "alertname" label exists. */ -}}
-{{- /*   - "($label=$value)" when "alertname" is missing. */ -}}
-{{- /* - Annotations */ -}}
-{{- define "dojo.alert.text" -}}
+{{- /* dojo.alert.title(Alert) */ -}}
+{{- /* Alert title: */ -}}
+{{- /* - "[$alertname_value] ($label=$value)" when "alertname" label exists. */ -}}
+{{- /* - "($label=$value)" when "alertname" is missing. */ -}}
+{{- define "dojo.alert.title" -}}
     {{- $alert := . -}}
     {{- with index .Labels.alertname -}}
         {{- "[" -}}{{ . }}{{- "]" -}}
@@ -103,6 +101,13 @@
             {{- end -}}
         {{- ")" -}}
     {{- end -}}
+{{- end -}}
+
+{{- /* dojo.alert.text(Alert) */ -}}
+{{- /* Textual representation of the Alert with its labels, annotations and */ -}}
+{{- /* link. */ -}}
+{{- define "dojo.alert.text" -}}
+    {{- template "dojo.alert.title" . -}}
     {{- with .Annotations.SortedPairs -}}
         {{- "\nAnnotations:" -}}
         {{- range . -}}
