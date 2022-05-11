@@ -392,6 +392,82 @@ func TestTemplateExpansion(t *testing.T) {
 	}
 }
 
+func TestDojoEmoji(t *testing.T) {
+	tmpl, err := FromGlobs()
+	require.NoError(t, err)
+
+	for _, tc := range []struct {
+		title string
+		in    string
+		data  interface{}
+
+		exp  string
+		fail bool
+	}{
+		{
+			title: "dojo.emoji with firing high urgency alerts",
+			in:    `{{ template "dojo.emoji" . }}`,
+			data: Data{
+				Status: "firing",
+				CommonLabels: KV{
+					"urgency": "high",
+				},
+			},
+			exp: "💥",
+		},
+		{
+			title: "dojo.emoji with firing low urgency alerts",
+			in:    `{{ template "dojo.emoji" . }}`,
+			data: Data{
+				Status: "firing",
+				CommonLabels: KV{
+					"urgency": "low",
+				},
+			},
+			exp: "⚠️",
+		},
+		{
+			title: "dojo.emoji with firing bad urgency alerts",
+			in:    `{{ template "dojo.emoji" . }}`,
+			data: Data{
+				Status: "firing",
+				CommonLabels: KV{
+					"urgency": "bad",
+				},
+			},
+			exp: "💩",
+		},
+		{
+			title: "dojo.emoji with firing no urgency alerts",
+			in:    `{{ template "dojo.emoji" . }}`,
+			data: Data{
+				Status: "firing",
+			},
+			exp: "💩",
+		},
+		{
+			title: "dojo.emoji with non firing alerts",
+			in:    `{{ template "dojo.emoji" . }}`,
+			data: Data{
+				Status: "resolved",
+			},
+			exp: "👌",
+		},
+	} {
+		tc := tc
+		t.Run(tc.title, func(t *testing.T) {
+			f := tmpl.ExecuteTextString
+			got, err := f(globalDojoTemplate+tc.in, tc.data)
+			if tc.fail {
+				require.NotNil(t, err)
+				return
+			}
+			require.NoError(t, err)
+			require.Equal(t, tc.exp, got)
+		})
+	}
+}
+
 func TestDojoSubjectStableText(t *testing.T) {
 	tmpl, err := FromGlobs()
 	require.NoError(t, err)
@@ -410,8 +486,12 @@ func TestDojoSubjectStableText(t *testing.T) {
 			data: Data{
 				Receiver: "Receiver",
 				Status:   "firing",
+				CommonLabels: KV{
+					"tenant":  "example",
+					"urgency": "high",
+				},
 			},
-			exp: "Alerts for Receiver",
+			exp: "example: high urgency alerts firing",
 		},
 		{
 			title: "dojo.subject.stable_text with no group_by and resolved alerts",
@@ -419,8 +499,12 @@ func TestDojoSubjectStableText(t *testing.T) {
 			data: Data{
 				Receiver: "Receiver",
 				Status:   "resolved",
+				CommonLabels: KV{
+					"tenant":  "example",
+					"urgency": "high",
+				},
 			},
-			exp: "Resolved: Alerts for Receiver",
+			exp: "Resolved: example: high urgency alerts firing",
 		},
 		{
 			title: "dojo.subject.stable_text with group_by, alertname and firing alerts",
@@ -491,7 +575,7 @@ func TestDojoSubjectStableText(t *testing.T) {
 	}
 }
 
-func TestDojoAlertText(t *testing.T) {
+func TestDojoAlertTitle(t *testing.T) {
 	tmpl, err := FromGlobs()
 	require.NoError(t, err)
 
@@ -504,8 +588,145 @@ func TestDojoAlertText(t *testing.T) {
 		fail bool
 	}{
 		{
-			title: "dojo.alert.text with alertname and labels",
-			in:    `{{ template "dojo.alert.text" (index .Alerts 0) }}`,
+			title: "dojo.alert.title with alertname and labels",
+			in:    `{{ template "dojo.alert.title" (index .Alerts 0) }}`,
+			data: Data{
+				Alerts: Alerts{
+					{
+						Labels: KV{
+							"alertname": "AlertName",
+							"label1":    "value1",
+							"label2":    "value2",
+						},
+					},
+				},
+			},
+			exp: "[AlertName] (label1=value1 label2=value2)",
+		},
+		{
+			title: "dojo.alert.title with alertname and no extra labels",
+			in:    `{{ template "dojo.alert.title" (index .Alerts 0) }}`,
+			data: Data{
+				Alerts: Alerts{
+					{
+						Labels: KV{
+							"alertname": "AlertName",
+						},
+					},
+				},
+			},
+			exp: "[AlertName]",
+		},
+		{
+			title: "dojo.alert.title without alertname and labels",
+			in:    `{{ template "dojo.alert.title" (index .Alerts 0) }}`,
+			data: Data{
+				Alerts: Alerts{
+					{
+						Labels: KV{
+							"label1": "value1",
+							"label2": "value2",
+						},
+					},
+				},
+			},
+			exp: "(label1=value1 label2=value2)",
+		},
+	} {
+		tc := tc
+		t.Run(tc.title, func(t *testing.T) {
+			f := tmpl.ExecuteTextString
+			got, err := f(globalDojoTemplate+tc.in, tc.data)
+			if tc.fail {
+				require.NotNil(t, err)
+				return
+			}
+			require.NoError(t, err)
+			require.Equal(t, tc.exp, got)
+		})
+	}
+}
+
+func TestDojoAlertsTitleList(t *testing.T) {
+	tmpl, err := FromGlobs()
+	require.NoError(t, err)
+
+	for _, tc := range []struct {
+		title string
+		in    string
+		data  interface{}
+
+		exp  string
+		fail bool
+	}{
+		{
+			title: "dojo.alert.title with single alert",
+			in:    `{{ template "dojo.alerts.title_list" .Alerts }}`,
+			data: Data{
+				Alerts: Alerts{
+					Alert{
+						Labels: KV{
+							"alertname": "AlertName",
+							"label1":    "value1",
+							"label2":    "value2",
+						},
+					},
+				},
+			},
+			exp: "- [AlertName] (label1=value1 label2=value2)",
+		},
+		{
+			title: "dojo.alert.title with multiple alerts",
+			in:    `{{ template "dojo.alerts.title_list" .Alerts }}`,
+			data: Data{
+				Alerts: Alerts{
+					Alert{
+						Labels: KV{
+							"alertname": "AlertName",
+							"label1":    "value1",
+							"label2":    "value2",
+						},
+					},
+					Alert{
+						Labels: KV{
+							"alertname": "AlertName",
+						},
+					},
+				},
+			},
+			exp: "- [AlertName] (label1=value1 label2=value2)\n" +
+				"- [AlertName]",
+		},
+	} {
+		tc := tc
+		t.Run(tc.title, func(t *testing.T) {
+			f := tmpl.ExecuteTextString
+			got, err := f(globalDojoTemplate+tc.in, tc.data)
+			if tc.fail {
+				require.NotNil(t, err)
+				return
+			}
+			require.NoError(t, err)
+			require.Equal(t, tc.exp, got)
+		})
+	}
+}
+
+func TestDojoAlertDetails(t *testing.T) {
+	tmpl, err := FromGlobs()
+	require.NoError(t, err)
+
+	for _, tc := range []struct {
+		title string
+		in    string
+		data  interface{}
+
+		exp  string
+		fail bool
+	}{
+		{
+			title: "dojo.alert.details with alertname and labels",
+			in:    `{{ template "dojo.alert.details" (index .Alerts 0) }}`,
 			data: Data{
 				Alerts: Alerts{
 					{
@@ -530,8 +751,8 @@ func TestDojoAlertText(t *testing.T) {
 				"http://generator.url/",
 		},
 		{
-			title: "dojo.alert.text with alertname and no extra labels",
-			in:    `{{ template "dojo.alert.text" (index .Alerts 0) }}`,
+			title: "dojo.alert.details with alertname and no extra labels",
+			in:    `{{ template "dojo.alert.details" (index .Alerts 0) }}`,
 			data: Data{
 				Alerts: Alerts{
 					{
@@ -554,8 +775,8 @@ func TestDojoAlertText(t *testing.T) {
 				"http://generator.url/",
 		},
 		{
-			title: "dojo.alert.text without alertname and labels",
-			in:    `{{ template "dojo.alert.text" (index .Alerts 0) }}`,
+			title: "dojo.alert.details without alertname and labels",
+			in:    `{{ template "dojo.alert.details" (index .Alerts 0) }}`,
 			data: Data{
 				Alerts: Alerts{
 					{
@@ -593,7 +814,7 @@ func TestDojoAlertText(t *testing.T) {
 	}
 }
 
-func TestDojoAlertsStatusGroupedText(t *testing.T) {
+func TestDojoAlertsDetailsList(t *testing.T) {
 	tmpl, err := FromGlobs()
 	require.NoError(t, err)
 
@@ -606,8 +827,104 @@ func TestDojoAlertsStatusGroupedText(t *testing.T) {
 		fail bool
 	}{
 		{
-			title: "dojo.alerts.status_grouped_text with firing & resolved",
-			in:    `{{ template "dojo.alerts.status_grouped_text" .Alerts }}`,
+			title: "dojo.alerts.details_list with one alert",
+			in:    `{{ template "dojo.alerts.details_list" .Alerts }}`,
+			data: Data{
+				Alerts: Alerts{
+					Alert{
+						Status: "firing",
+						Labels: KV{
+							"alertname": "AlertName",
+							"label1":    "value1",
+							"label2":    "value2",
+						},
+						Annotations: KV{
+							"annotation1": "value1",
+							"annotation2": "value2",
+						},
+						GeneratorURL: "http://generator.url/",
+					},
+				},
+			},
+			exp: "[AlertName] (label1=value1 label2=value2)\n" +
+				"Annotations:\n" +
+				"annotation1: value1\n" +
+				"annotation2: value2\n" +
+				"http://generator.url/",
+		},
+		{
+			title: "dojo.alerts.details_list with multiple alerts",
+			in:    `{{ template "dojo.alerts.details_list" .Alerts }}`,
+			data: Data{
+				Alerts: Alerts{
+					Alert{
+						Status: "firing",
+						Labels: KV{
+							"alertname": "AlertName",
+							"label1":    "value1",
+							"label2":    "value2",
+						},
+						Annotations: KV{
+							"annotation1": "value1",
+							"annotation2": "value2",
+						},
+						GeneratorURL: "http://generator.url/",
+					},
+					Alert{
+						Status: "firing",
+						Labels: KV{
+							"alertname": "AlertName",
+						},
+						Annotations: KV{
+							"annotation1": "value1",
+							"annotation2": "value2",
+						},
+						GeneratorURL: "http://generator.url/",
+					},
+				},
+			},
+			exp: "[AlertName] (label1=value1 label2=value2)\n" +
+				"Annotations:\n" +
+				"annotation1: value1\n" +
+				"annotation2: value2\n" +
+				"http://generator.url/\n" +
+				"\n" +
+				"[AlertName]\n" +
+				"Annotations:\n" +
+				"annotation1: value1\n" +
+				"annotation2: value2\n" +
+				"http://generator.url/",
+		},
+	} {
+		tc := tc
+		t.Run(tc.title, func(t *testing.T) {
+			f := tmpl.ExecuteTextString
+			got, err := f(globalDojoTemplate+tc.in, tc.data)
+			if tc.fail {
+				require.NotNil(t, err)
+				return
+			}
+			require.NoError(t, err)
+			require.Equal(t, tc.exp, got)
+		})
+	}
+}
+
+func TestDojoAlertsStatusTitleList(t *testing.T) {
+	tmpl, err := FromGlobs()
+	require.NoError(t, err)
+
+	for _, tc := range []struct {
+		title string
+		in    string
+		data  interface{}
+
+		exp  string
+		fail bool
+	}{
+		{
+			title: "dojo.alerts.status_title_list with firing & resolved",
+			in:    `{{ template "dojo.alerts.status_title_list" .Alerts }}`,
 			data: Data{
 				Alerts: Alerts{
 					{
@@ -616,10 +933,6 @@ func TestDojoAlertsStatusGroupedText(t *testing.T) {
 							"alertname": "AlertName1",
 							"label1":    "value1",
 							"label2":    "value2",
-						},
-						Annotations: KV{
-							"annotation1": "value1",
-							"annotation2": "value2",
 						},
 						GeneratorURL: "http://generator.url/",
 					},
@@ -629,33 +942,21 @@ func TestDojoAlertsStatusGroupedText(t *testing.T) {
 							"label1": "value1",
 							"label2": "value2",
 						},
-						Annotations: KV{
-							"annotation1": "value1",
-							"annotation2": "value2",
-						},
 						GeneratorURL: "http://generator.url/",
 					},
 				},
 			},
-			exp: "FIRING:\n" +
+			exp: "🔥 FIRING:\n" +
 				"\n" +
-				"[AlertName1] (label1=value1 label2=value2)\n" +
-				"Annotations:\n" +
-				"annotation1: value1\n" +
-				"annotation2: value2\n" +
-				"http://generator.url/\n" +
+				"- [AlertName1] (label1=value1 label2=value2)\n" +
 				"\n" +
-				"RESOLVED:\n" +
+				"👌 RESOLVED:\n" +
 				"\n" +
-				"(label1=value1 label2=value2)\n" +
-				"Annotations:\n" +
-				"annotation1: value1\n" +
-				"annotation2: value2\n" +
-				"http://generator.url/",
+				"- (label1=value1 label2=value2)",
 		},
 		{
-			title: "dojo.alerts.status_grouped_text with only firing",
-			in:    `{{ template "dojo.alerts.status_grouped_text" .Alerts }}`,
+			title: "dojo.alerts.status_title_list with only firing",
+			in:    `{{ template "dojo.alerts.status_title_list" .Alerts }}`,
 			data: Data{
 				Alerts: Alerts{
 					{
@@ -665,10 +966,6 @@ func TestDojoAlertsStatusGroupedText(t *testing.T) {
 							"label1":    "value1",
 							"label2":    "value2",
 						},
-						Annotations: KV{
-							"annotation1": "value1",
-							"annotation2": "value2",
-						},
 						GeneratorURL: "http://generator.url/",
 					},
 					{
@@ -677,25 +974,43 @@ func TestDojoAlertsStatusGroupedText(t *testing.T) {
 							"label1": "value1",
 							"label2": "value2",
 						},
-						Annotations: KV{
-							"annotation1": "value1",
-							"annotation2": "value2",
+						GeneratorURL: "http://generator.url/",
+					},
+				},
+			},
+			exp: "🔥 FIRING:\n" +
+				"\n" +
+				"- [AlertName1] (label1=value1 label2=value2)\n" +
+				"- (label1=value1 label2=value2)",
+		},
+		{
+			title: "dojo.alerts.status_title_list with only resolved",
+			in:    `{{ template "dojo.alerts.status_title_list" .Alerts }}`,
+			data: Data{
+				Alerts: Alerts{
+					{
+						Status: "resolved",
+						Labels: KV{
+							"alertname": "AlertName1",
+							"label1":    "value1",
+							"label2":    "value2",
+						},
+						GeneratorURL: "http://generator.url/",
+					},
+					{
+						Status: "resolved",
+						Labels: KV{
+							"label1": "value1",
+							"label2": "value2",
 						},
 						GeneratorURL: "http://generator.url/",
 					},
 				},
 			},
-			exp: "[AlertName1] (label1=value1 label2=value2)\n" +
-				"Annotations:\n" +
-				"annotation1: value1\n" +
-				"annotation2: value2\n" +
-				"http://generator.url/\n" +
+			exp: "👌 RESOLVED:\n" +
 				"\n" +
-				"(label1=value1 label2=value2)\n" +
-				"Annotations:\n" +
-				"annotation1: value1\n" +
-				"annotation2: value2\n" +
-				"http://generator.url/",
+				"- [AlertName1] (label1=value1 label2=value2)\n" +
+				"- (label1=value1 label2=value2)",
 		},
 	} {
 		tc := tc
@@ -740,7 +1055,7 @@ func TestDojoAlertsUrlFiring(t *testing.T) {
 					"be":        "used",
 				},
 			},
-			exp: "https://paymentsense.grafana.net/alerting/list?" +
+			exp: "https://example.grafana.net/alerting/list?" +
 				"dataSource=DATASOURCE_NAME&" +
 				"queryString=" +
 				"tenant%3Dexample," +
@@ -764,7 +1079,7 @@ func TestDojoAlertsUrlFiring(t *testing.T) {
 					"be":        "used",
 				},
 			},
-			exp: "https://paymentsense.grafana.net/alerting/list?" +
+			exp: "https://example.grafana.net/alerting/list?" +
 				"dataSource=DATASOURCE_NAME&" +
 				"queryString=" +
 				"tenant%3Dexample," +
@@ -785,7 +1100,7 @@ func TestDojoAlertsUrlFiring(t *testing.T) {
 					"be":        "used",
 				},
 			},
-			exp: "https://paymentsense.grafana.net/alerting/list?" +
+			exp: "https://example.grafana.net/alerting/list?" +
 				"dataSource=DATASOURCE_NAME&" +
 				"queryString=" +
 				"tenant%3Dexample," +
@@ -836,7 +1151,7 @@ func TestDojoAlertsUrlHistory(t *testing.T) {
 					"be":        "used",
 				},
 			},
-			exp: "https://paymentsense.grafana.net/d/luyBQ9Y7z/?orgId=1&" +
+			exp: "https://example.grafana.net/d/luyBQ9Y7z/?orgId=1&" +
 				"var-data_source=DATASOURCE_NAME&" +
 				"var-tenant=example&" +
 				"var-urgency=high&" +
@@ -857,7 +1172,7 @@ func TestDojoAlertsUrlHistory(t *testing.T) {
 					"be":        "used",
 				},
 			},
-			exp: "https://paymentsense.grafana.net/d/luyBQ9Y7z/?orgId=1&" +
+			exp: "https://example.grafana.net/d/luyBQ9Y7z/?orgId=1&" +
 				"var-data_source=DATASOURCE_NAME&" +
 				"var-tenant=example&" +
 				"var-label=urgency%7C!~%7C%5E(high__gfp__low)$&" +
@@ -875,7 +1190,7 @@ func TestDojoAlertsUrlHistory(t *testing.T) {
 					"be":        "used",
 				},
 			},
-			exp: "https://paymentsense.grafana.net/d/luyBQ9Y7z/?orgId=1&" +
+			exp: "https://example.grafana.net/d/luyBQ9Y7z/?orgId=1&" +
 				"var-data_source=DATASOURCE_NAME&" +
 				"var-tenant=example&" +
 				"var-urgency=high&",
@@ -923,7 +1238,7 @@ func TestDojoAlertsUrlNewSilence(t *testing.T) {
 					"be":        "used",
 				},
 			},
-			exp: "https://paymentsense.grafana.net/alerting/silence/new?" +
+			exp: "https://example.grafana.net/alerting/silence/new?" +
 				"alertmanager=ALERTMANAGER_NAME&" +
 				"matcher=tenant%3Dexample&" +
 				"matcher=urgency%3Dhigh&" +
@@ -944,7 +1259,7 @@ func TestDojoAlertsUrlNewSilence(t *testing.T) {
 					"be":        "used",
 				},
 			},
-			exp: "https://paymentsense.grafana.net/alerting/silence/new?" +
+			exp: "https://example.grafana.net/alerting/silence/new?" +
 				"alertmanager=ALERTMANAGER_NAME&" +
 				"matcher=tenant%3Dexample&" +
 				"matcher=urgency!~%5E(high|low)$&" +
@@ -962,7 +1277,7 @@ func TestDojoAlertsUrlNewSilence(t *testing.T) {
 					"be":        "used",
 				},
 			},
-			exp: "https://paymentsense.grafana.net/alerting/silence/new?" +
+			exp: "https://example.grafana.net/alerting/silence/new?" +
 				"alertmanager=ALERTMANAGER_NAME&" +
 				"matcher=tenant%3Dexample&" +
 				"matcher=urgency%3Dhigh&",
@@ -1131,62 +1446,17 @@ func TestDojoSlack(t *testing.T) {
 		fail bool
 	}{
 		{
-			title: "dojo.slack.icon_emoji with firing high urgency alerts",
-			in:    `{{ template "dojo.slack.icon_emoji" . }}`,
-			data: Data{
-				Status: "firing",
-				CommonLabels: KV{
-					"urgency": "high",
-				},
-			},
-			exp: ":boom:",
-		},
-		{
-			title: "dojo.slack.icon_emoji with firing low urgency alerts",
-			in:    `{{ template "dojo.slack.icon_emoji" . }}`,
-			data: Data{
-				Status: "firing",
-				CommonLabels: KV{
-					"urgency": "low",
-				},
-			},
-			exp: ":warning:",
-		},
-		{
-			title: "dojo.slack.icon_emoji with firing bad urgency alerts",
-			in:    `{{ template "dojo.slack.icon_emoji" . }}`,
-			data: Data{
-				Status: "firing",
-				CommonLabels: KV{
-					"urgency": "bad",
-				},
-			},
-			exp: ":shit:",
-		},
-		{
-			title: "dojo.slack.icon_emoji with firing no urgency alerts",
-			in:    `{{ template "dojo.slack.icon_emoji" . }}`,
-			data: Data{
-				Status: "firing",
-			},
-			exp: ":shit:",
-		},
-		{
-			title: "dojo.slack.icon_emoji with non firing alerts",
-			in:    `{{ template "dojo.slack.icon_emoji" . }}`,
-			data: Data{
-				Status: "resolved",
-			},
-			exp: ":ok_hand:",
-		},
-		{
 			title: "dojo.slack.fallback",
 			in:    `{{ template "dojo.slack.fallback" . }}`,
 			data: Data{
 				Receiver: "Receiver",
 				Status:   "firing",
+				CommonLabels: KV{
+					"tenant":  "example",
+					"urgency": "low",
+				},
 			},
-			exp: "Alerts for Receiver | https://paymentsense.grafana.net/alerting/list?dataSource=DATASOURCE_NAME&queryString=tenant%3D,urgency!~%5E(high%7Clow)$,&ruleType=alerting&alertState=firing",
+			exp: "example: low urgency alerts firing | https://example.grafana.net/alerting/list?dataSource=DATASOURCE_NAME&queryString=tenant%3Dexample,urgency%3Dlow,&ruleType=alerting&alertState=firing",
 		},
 		{
 			title: "dojo.slack.color with firing high urgency alerts",

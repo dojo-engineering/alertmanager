@@ -1,3 +1,41 @@
+{{- /* dojo.grafana.url */ -}}
+{{- /* URL for the grafana instance. */ -}}
+{{- define "dojo.grafana.url" -}}
+    {{- "https://example.grafana.net/" -}}
+{{- end -}}
+
+{{- /* dojo.grafana.alerting.list.data_source */ -}}
+{{- /* Data source for alert list (alerting/list?dataSource=XXX). */ -}}
+{{- define "dojo.grafana.alerting.list.data_source" -}}
+    {{- "DATASOURCE_NAME" -}}
+{{- end -}}
+
+{{- /* dojo.grafana.alerting.alertmanager */ -}}
+{{- /* AlertManager instance (silences?alertmanager=XXX). */ -}}
+{{- define "dojo.grafana.alerting.alertmanager" -}}
+    {{- "ALERTMANAGER_NAME" -}}
+{{- end -}}
+
+{{- /* dojo.emoji(Data) */ -}}
+{{- /* An emoji as a function of firing alerts and the urgency. */ -}}
+{{- define "dojo.emoji" -}}
+    {{- if eq .Status "firing" -}}
+        {{- with .CommonLabels.urgency -}}
+            {{- if eq . "high" -}}
+                {{- "💥" -}}
+            {{- else if eq . "low" -}}
+                {{- "⚠️" -}}
+            {{- else -}}
+                {{- "💩" -}}
+            {{- end -}}
+        {{- else -}}
+            {{- "💩" -}}
+        {{- end -}}
+    {{- else -}}
+        {{ "👌" }}
+    {{- end -}}
+{{- end -}}
+
 {{- /* dojo.subject.stable_text(Data) */ -}}
 {{- /* This provides a stable subject value that is only a function of the static */ -}}
 {{- /* values used to group the alerts being notified (GroupLabels). */ -}}
@@ -6,8 +44,10 @@
 {{- /* can change as new alerts fire and old alerts resolve, making the subject */ -}}
 {{- /* value change as well. */ -}}
 {{- /* Having a stable subject is good for use cases where the grouped alerts state */ -}}
-{{- /* is to me synchronised with another system (eg: PagerDuty), and we */ -}}
+{{- /* is to be synchronised with another system (eg: PagerDuty), and we */ -}}
 {{- /* want to prevent a stale subject from misleading people. */ -}}
+{{- /* It also makes use of standard labels tenant and urgency, expected */ -}}
+{{- /* to universally exist. */ -}}
 {{- /* Examples: */ -}}
 {{- /* "Alerts for $receiver" */ -}}
 {{- /* "[$alertname_value] ($group_label_key=$group_label_value)" */ -}}
@@ -37,17 +77,25 @@
             {{ ")" }}
         {{- end -}}
     {{- else -}}
-        {{- "Alerts for " -}}{{- .Receiver -}}
+        {{- /* tenant is a mandatory field for all configured alerts, */ -}}
+        {{- /* validated by CI so it is guaranteed to exist at CommonLabels */ -}}
+        {{- .CommonLabels.tenant -}}{{- ": " -}}
+        {{- /* urgency is to become mandatory via CI... */ -}}
+        {{- with .CommonLabels.urgency -}}
+            {{- . -}}
+        {{- /* ...until then, we must account for when it is missing. */ -}}
+        {{- else -}}
+            {{- "unknown" -}}
+        {{- end -}}
+        {{- " urgency alerts firing" -}}
     {{- end -}}
 {{- end -}}
 
-{{- /* dojo.alert.text(Alert) */ -}}
-{{- /* Textual representation of the Alert with: */ -}}
-{{- /* - A descriptive "alert name": */ -}}
-{{- /*   - "[$alertname_value] ($label=$value)" when "alertname" label exists. */ -}}
-{{- /*   - "($label=$value)" when "alertname" is missing. */ -}}
-{{- /* - Annotations */ -}}
-{{- define "dojo.alert.text" -}}
+{{- /* dojo.alert.title(Alert) */ -}}
+{{- /* Alert title: */ -}}
+{{- /* - "[$alertname_value] ($label=$value)" when "alertname" label exists. */ -}}
+{{- /* - "($label=$value)" when "alertname" is missing. */ -}}
+{{- define "dojo.alert.title" -}}
     {{- $alert := . -}}
     {{- with index .Labels.alertname -}}
         {{- "[" -}}{{ . }}{{- "]" -}}
@@ -73,6 +121,28 @@
             {{- end -}}
         {{- ")" -}}
     {{- end -}}
+{{- end -}}
+
+{{- /* dojo.alerts.title_list(Alerts) */ -}}
+{{- /* List of alert titles. */ -}}
+{{- define "dojo.alerts.title_list" -}}
+    {{- with . -}}
+        {{- with index . 0 -}}
+            {{- "- " }}{{- template "dojo.alert.title" . -}}
+        {{- end -}}
+        {{- with slice . 1 -}}
+            {{- range . -}}
+                {{- "\n- " }}{{- template "dojo.alert.title" . -}}
+            {{- end -}}
+        {{- end -}}
+    {{- end -}}
+{{- end -}}
+
+{{- /* dojo.alert.details(Alert) */ -}}
+{{- /* Textual representation of the Alert with its labels, annotations and */ -}}
+{{- /* link. */ -}}
+{{- define "dojo.alert.details" -}}
+    {{- template "dojo.alert.title" . -}}
     {{- with .Annotations.SortedPairs -}}
         {{- "\nAnnotations:" -}}
         {{- range . -}}
@@ -84,54 +154,53 @@
     {{- end -}}
 {{- end -}}
 
-{{- /* dojo.alerts.text(Alerts) */ -}}
+{{- /* dojo.alerts.details_list(Alerts) */ -}}
 {{- /* Textual representation of a list of Alerts. */ -}}
-{{- /* See also: dojo.alert.text */ -}}
-{{- /* See also: dojo.alerts.status_grouped_text */ -}}
-{{- define "dojo.alerts.text" -}}
+{{- define "dojo.alerts.details_list" -}}
     {{- with . -}}
         {{- with index . 0 -}}
-            {{- template "dojo.alert.text" . -}}
+            {{- template "dojo.alert.details" . -}}
         {{- end -}}
         {{- with slice . 1 -}}
             {{- range . -}}
                 {{- "\n\n" }}
-                {{- template "dojo.alert.text" . -}}
+                {{- template "dojo.alert.details" . -}}
             {{- end -}}
         {{- end -}}
     {{- end -}}
 {{- end -}}
 
-{{- /* dojo.alerts.status_grouped_text(Alerts) */ -}}
+{{- /* dojo.alerts.status_title_list(Alerts) */ -}}
 {{- /* Textual representation of a list of Alerts with status */ -}}
 {{- /* (firing / resolved) grouping. */ -}}
-{{- /* See also: dojo.alert.text */ -}}
-{{- /* See also: dojo.alerts.text */ -}}
-{{- define "dojo.alerts.status_grouped_text" -}}
-    {{- if and (gt (len .Firing) 0) (gt (len .Resolved) 0)  }}
-        {{- $alerts := . -}}
-        {{- with .Firing -}}
-            {{- "FIRING:\n\n" -}}
-            {{- template "dojo.alerts.text" . -}}
-        {{- end -}}
-        {{- with .Resolved -}}
-            {{- with $alerts.Firing -}}
-                {{- "\n\n" -}}
-            {{- end -}}
-            {{- "RESOLVED:\n\n" -}}
-            {{- template "dojo.alerts.text" . -}}
-        {{- end -}}
-    {{- else -}}
-        {{- template "dojo.alerts.text" .Firing -}}
-        {{- template "dojo.alerts.text" .Resolved -}}
+{{- /* See also: dojo.alert.details */ -}}
+{{- /* See also: dojo.alerts.details */ -}}
+{{- define "dojo.alerts.status_title_list" -}}
+    {{- $alerts := . -}}
+    {{- with .Firing -}}
+        {{- "🔥 FIRING:\n\n" -}}
+        {{- template "dojo.alerts.title_list" . -}}
     {{- end -}}
+    {{- with .Resolved -}}
+        {{- with $alerts.Firing -}}
+            {{- "\n\n" -}}
+        {{- end -}}
+        {{- "👌 RESOLVED:\n\n" -}}
+        {{- template "dojo.alerts.title_list" . -}}
+    {{- end -}}
+{{- end -}}
+
+{{- /* dojo.alerts.url.firing(Data) */ -}}
+{{- /* Title for dojo.alerts.url.firing */ -}}
+{{- define "dojo.alerts.url.firing.title" -}}
+    {{- "📜 Alert Rules" -}}
 {{- end -}}
 
 {{- /* dojo.alerts.url.firing(Data) */ -}}
 {{- /* URL that points to Grafana Labs list of firing alerts. */ -}}
 {{- define "dojo.alerts.url.firing" -}}
-    {{- "https://paymentsense.grafana.net/alerting/list?" }}
-        {{- "dataSource=DATASOURCE_NAME" -}}
+    {{- template "dojo.grafana.url" -}}{{- "alerting/list?" }}
+        {{- "dataSource=" -}}{{- template "dojo.grafana.alerting.list.data_source" -}}
         {{- "&queryString=" -}}
             {{- /* tenant is a mandatory field for all configured alerts, */ -}}
             {{- /* validated by CI so it is guaranteed to exist at CommonLabels */ -}}
@@ -153,11 +222,17 @@
 {{- end -}}
 
 {{- /* dojo.alerts.url.history(Data) */ -}}
+{{- /* Title for dojo.alerts.url.history */ -}}
+{{- define "dojo.alerts.url.history.title" -}}
+    {{- "📈 Alert History Dashboard" -}}
+{{- end -}}
+
+{{- /* dojo.alerts.url.history(Data) */ -}}
 {{- /* URL that points to a Grafana Labs Dashboard with the history of alerts */ -}}
 {{- define "dojo.alerts.url.history" -}}
-    {{- "https://paymentsense.grafana.net/d/luyBQ9Y7z/?" -}}
+    {{- template "dojo.grafana.url" -}}{{- "d/luyBQ9Y7z/?" -}}
         {{- "orgId=1&" -}}
-        {{- "var-data_source=DATASOURCE_NAME&" -}}
+        {{- "var-data_source=" -}}{{- template "dojo.grafana.alerting.list.data_source" -}}{{- "&" -}}
         {{- /* tenant is a mandatory field for all configured alerts, */ -}}
         {{- /* validated by CI so it is guaranteed to exist at CommonLabels */ -}}
         {{- "var-tenant=" -}}{{- .CommonLabels.tenant | urlquery -}}{{- "&" -}}
@@ -185,11 +260,17 @@
 {{- end -}}
 
 {{- /* dojo.alerts.url.new_silence(Data) */ -}}
+{{- /* Title for dojo.alerts.url.new_silence */ -}}
+{{- define "dojo.alerts.url.new_silence.title" -}}
+    {{- "🔕 Silence Alerts" -}}
+{{- end -}}
+
+{{- /* dojo.alerts.url.new_silence(Data) */ -}}
 {{- /* URL that points to a Grafana Labs page where a silence to all matching */ -}}
 {{- /* alerts can be added */ -}}
 {{- define "dojo.alerts.url.new_silence" -}}
-    {{- "https://paymentsense.grafana.net/alerting/silence/new?" -}}
-        {{- "alertmanager=ALERTMANAGER_NAME&" -}}
+    {{- template "dojo.grafana.url" -}}{{- "alerting/silence/new?" -}}
+        {{- "alertmanager=" -}}{{- template "dojo.grafana.alerting.alertmanager" -}}{{- "&" -}}
         {{- /* tenant is a mandatory field for all configured alerts, */ -}}
         {{- /* validated by CI so it is guaranteed to exist at CommonLabels */ -}}
         {{- "matcher=tenant%3D" -}}{{- .CommonLabels.tenant | urlquery -}}{{- "&" -}}
@@ -215,13 +296,13 @@
 {{- /* dojo.documentation.links(Data) */ -}}
 {{- /* Docummentation with links to references regarding the notification */ -}}
 {{- define "dojo.documentation.links" -}}
-    {{- "📜 Alert Rules:\n" -}}
+    {{ template "dojo.alerts.url.firing.title" . }}{{- ":\n" -}}
     {{ template "dojo.alerts.url.firing" . }}{{- "\n" -}}
     {{- "\n" -}}
-    {{- "📈 Alert History Dashboard:\n" -}}
+    {{ template "dojo.alerts.url.history.title" . }}{{- ":\n" -}}
     {{ template "dojo.alerts.url.history" . -}}{{- "\n" -}}
     {{- "\n" -}}
-    {{- "🔕 Silence Alerts:\n" -}}
+    {{ template "dojo.alerts.url.new_silence.title" . }}{{- ":\n" -}}
     {{ template "dojo.alerts.url.new_silence" . -}}
 {{- end -}}
 
@@ -251,26 +332,6 @@
     {{- "The immediate action, is to evaluate the real urgency of the firing alert(s) and work on it accordingly.\n" -}}
     {{- "\n" -}}
     {{- "The secondary action, is to fix the alert configuration so that it fires with a correctly defined urgency next time." -}}
-{{- end -}}
-
-{{- /* dojo.slack.icon_emoji(Data) */ -}}
-{{- /* Emoji for Slack notifications. */ -}}
-{{- define "dojo.slack.icon_emoji" -}}
-    {{- if eq .Status "firing" -}}
-        {{- with .CommonLabels.urgency -}}
-            {{- if eq . "high" -}}
-                {{- ":boom:" -}}
-            {{- else if eq . "low" -}}
-                {{- ":warning:" -}}
-            {{- else -}}
-                {{- ":shit:" -}}
-            {{- end -}}
-        {{- else -}}
-            {{- ":shit:" -}}
-        {{- end -}}
-    {{- else -}}
-        {{ ":ok_hand:" }}
-    {{- end -}}
 {{- end -}}
 
 {{- /* dojo.slack.fallback(Data) */ -}}
