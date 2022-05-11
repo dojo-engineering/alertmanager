@@ -405,40 +405,40 @@ func TestDojoEmoji(t *testing.T) {
 		fail bool
 	}{
 		{
-			title: "dojo.emoji with firing high urgency alerts",
+			title: "dojo.emoji with firing page severity alerts",
 			in:    `{{ template "dojo.emoji" . }}`,
 			data: Data{
 				Status: "firing",
 				CommonLabels: KV{
-					"urgency": "high",
+					"severity": "page",
 				},
 			},
 			exp: "💥",
 		},
 		{
-			title: "dojo.emoji with firing low urgency alerts",
+			title: "dojo.emoji with firing ticket severity alerts",
 			in:    `{{ template "dojo.emoji" . }}`,
 			data: Data{
 				Status: "firing",
 				CommonLabels: KV{
-					"urgency": "low",
+					"severity": "ticket",
 				},
 			},
 			exp: "⚠️",
 		},
 		{
-			title: "dojo.emoji with firing bad urgency alerts",
+			title: "dojo.emoji with firing bad severity alerts",
 			in:    `{{ template "dojo.emoji" . }}`,
 			data: Data{
 				Status: "firing",
 				CommonLabels: KV{
-					"urgency": "bad",
+					"severity": "bad",
 				},
 			},
 			exp: "💩",
 		},
 		{
-			title: "dojo.emoji with firing no urgency alerts",
+			title: "dojo.emoji with firing no severity alerts",
 			in:    `{{ template "dojo.emoji" . }}`,
 			data: Data{
 				Status: "firing",
@@ -488,10 +488,10 @@ func TestDojoSubjectStableText(t *testing.T) {
 				Status:   "firing",
 				CommonLabels: KV{
 					"tenant":  "example",
-					"urgency": "high",
+					"severity": "page",
 				},
 			},
-			exp: "example: high urgency alerts firing",
+			exp: "example: page severity alerts firing",
 		},
 		{
 			title: "dojo.subject.stable_text with no group_by and resolved alerts",
@@ -501,10 +501,10 @@ func TestDojoSubjectStableText(t *testing.T) {
 				Status:   "resolved",
 				CommonLabels: KV{
 					"tenant":  "example",
-					"urgency": "high",
+					"severity": "page",
 				},
 			},
-			exp: "Resolved: example: high urgency alerts firing",
+			exp: "Resolved: example: page severity alerts firing",
 		},
 		{
 			title: "dojo.subject.stable_text with group_by, alertname and firing alerts",
@@ -1040,7 +1040,7 @@ func TestDojoAlertsUrlFiring(t *testing.T) {
 		fail bool
 	}{
 		{
-			title: "dojo.alerts.url.firing with group_by and with alertname and urgency",
+			title: "dojo.alerts.url.firing with group_by and with alertname and severity",
 			in:    `{{ template "dojo.alerts.url.firing" . }}`,
 			data: Data{
 				GroupLabels: KV{
@@ -1049,7 +1049,7 @@ func TestDojoAlertsUrlFiring(t *testing.T) {
 				},
 				CommonLabels: KV{
 					"tenant":    "example",
-					"urgency":   "high",
+					"severity":   "page",
 					"alertname": "AlertName",
 					"must":      "not",
 					"be":        "used",
@@ -1059,14 +1059,14 @@ func TestDojoAlertsUrlFiring(t *testing.T) {
 				"dataSource=DATASOURCE_NAME&" +
 				"queryString=" +
 				"tenant%3Dexample," +
-				"urgency%3Dhigh," +
+				"severity%3Dpage," +
 				"alertname%3DAlertName," +
 				"foo%3D%24b+a+r,&" +
 				"ruleType=alerting&" +
 				"alertState=firing",
 		},
 		{
-			title: "dojo.alerts.url.firing with group_by and without alertname and urgency",
+			title: "dojo.alerts.url.firing with group_by and without alertname and severity",
 			in:    `{{ template "dojo.alerts.url.firing" . }}`,
 			data: Data{
 				GroupLabels: KV{
@@ -1083,7 +1083,7 @@ func TestDojoAlertsUrlFiring(t *testing.T) {
 				"dataSource=DATASOURCE_NAME&" +
 				"queryString=" +
 				"tenant%3Dexample," +
-				"urgency!~%5E(high%7Clow)$," +
+				"severity!~%5E(page%7Cticket)$," +
 				"foo%3D%24b+a+r,&" +
 				"ruleType=alerting&" +
 				"alertState=firing",
@@ -1094,7 +1094,7 @@ func TestDojoAlertsUrlFiring(t *testing.T) {
 			data: Data{
 				CommonLabels: KV{
 					"tenant":    "example",
-					"urgency":   "high",
+					"severity":   "page",
 					"alertname": "AlertName",
 					"must":      "not",
 					"be":        "used",
@@ -1104,7 +1104,7 @@ func TestDojoAlertsUrlFiring(t *testing.T) {
 				"dataSource=DATASOURCE_NAME&" +
 				"queryString=" +
 				"tenant%3Dexample," +
-				"urgency%3Dhigh,&" +
+				"severity%3Dpage,&" +
 				"ruleType=alerting&" +
 				"alertState=firing",
 		},
@@ -1136,7 +1136,7 @@ func TestDojoAlertsUrlHistory(t *testing.T) {
 		fail bool
 	}{
 		{
-			title: "dojo.alerts.url.history with group_by and with alertname and urgency",
+			title: "dojo.alerts.url.history with group_by and with alertname and severity",
 			in:    `{{ template "dojo.alerts.url.history" . }}`,
 			data: Data{
 				GroupLabels: KV{
@@ -1145,7 +1145,7 @@ func TestDojoAlertsUrlHistory(t *testing.T) {
 				},
 				CommonLabels: KV{
 					"tenant":    "example",
-					"urgency":   "high",
+					"severity":   "page",
 					"alertname": "AlertName",
 					"must":      "not",
 					"be":        "used",
@@ -1154,12 +1154,12 @@ func TestDojoAlertsUrlHistory(t *testing.T) {
 			exp: "https://example.grafana.net/d/luyBQ9Y7z/?orgId=1&" +
 				"var-data_source=DATASOURCE_NAME&" +
 				"var-tenant=example&" +
-				"var-urgency=high&" +
+				"var-severity=page&" +
 				"var-alertname=AlertName&" +
 				"var-label=foo%7C%3D%7C%24b+a+r&",
 		},
 		{
-			title: "dojo.alerts.url.history with group_by and without alertname and urgency",
+			title: "dojo.alerts.url.history with group_by and without alertname and severity",
 			in:    `{{ template "dojo.alerts.url.history" . }}`,
 			data: Data{
 				GroupLabels: KV{
@@ -1175,7 +1175,7 @@ func TestDojoAlertsUrlHistory(t *testing.T) {
 			exp: "https://example.grafana.net/d/luyBQ9Y7z/?orgId=1&" +
 				"var-data_source=DATASOURCE_NAME&" +
 				"var-tenant=example&" +
-				"var-label=urgency%7C!~%7C%5E(high__gfp__low)$&" +
+				"var-label=severity%7C!~%7C%5E(page__gfp__ticket)$&" +
 				"var-label=foo%7C%3D%7C%24b+a+r&",
 		},
 		{
@@ -1184,7 +1184,7 @@ func TestDojoAlertsUrlHistory(t *testing.T) {
 			data: Data{
 				CommonLabels: KV{
 					"tenant":    "example",
-					"urgency":   "high",
+					"severity":   "page",
 					"alertname": "AlertName",
 					"must":      "not",
 					"be":        "used",
@@ -1193,7 +1193,7 @@ func TestDojoAlertsUrlHistory(t *testing.T) {
 			exp: "https://example.grafana.net/d/luyBQ9Y7z/?orgId=1&" +
 				"var-data_source=DATASOURCE_NAME&" +
 				"var-tenant=example&" +
-				"var-urgency=high&",
+				"var-severity=page&",
 		},
 	} {
 		tc := tc
@@ -1223,7 +1223,7 @@ func TestDojoAlertsUrlNewSilence(t *testing.T) {
 		fail bool
 	}{
 		{
-			title: "dojo.alerts.url.new_silence with group_by and with alertname and urgency",
+			title: "dojo.alerts.url.new_silence with group_by and with alertname and severity",
 			in:    `{{ template "dojo.alerts.url.new_silence" . }}`,
 			data: Data{
 				GroupLabels: KV{
@@ -1232,7 +1232,7 @@ func TestDojoAlertsUrlNewSilence(t *testing.T) {
 				},
 				CommonLabels: KV{
 					"tenant":    "example",
-					"urgency":   "high",
+					"severity":   "page",
 					"alertname": "AlertName",
 					"must":      "not",
 					"be":        "used",
@@ -1241,12 +1241,12 @@ func TestDojoAlertsUrlNewSilence(t *testing.T) {
 			exp: "https://example.grafana.net/alerting/silence/new?" +
 				"alertmanager=ALERTMANAGER_NAME&" +
 				"matcher=tenant%3Dexample&" +
-				"matcher=urgency%3Dhigh&" +
+				"matcher=severity%3Dpage&" +
 				"matcher=alertname%3DAlertName&" +
 				"matcher=foo%3D%24b+a+r&",
 		},
 		{
-			title: "dojo.alerts.url.new_silence with group_by and without alertname and urgency",
+			title: "dojo.alerts.url.new_silence with group_by and without alertname and severity",
 			in:    `{{ template "dojo.alerts.url.new_silence" . }}`,
 			data: Data{
 				GroupLabels: KV{
@@ -1262,7 +1262,7 @@ func TestDojoAlertsUrlNewSilence(t *testing.T) {
 			exp: "https://example.grafana.net/alerting/silence/new?" +
 				"alertmanager=ALERTMANAGER_NAME&" +
 				"matcher=tenant%3Dexample&" +
-				"matcher=urgency!~%5E(high|low)$&" +
+				"matcher=severity!~%5E(page|ticket)$&" +
 				"matcher=foo%3D%24b+a+r&",
 		},
 		{
@@ -1271,7 +1271,7 @@ func TestDojoAlertsUrlNewSilence(t *testing.T) {
 			data: Data{
 				CommonLabels: KV{
 					"tenant":    "example",
-					"urgency":   "high",
+					"severity":   "page",
 					"alertname": "AlertName",
 					"must":      "not",
 					"be":        "used",
@@ -1280,7 +1280,7 @@ func TestDojoAlertsUrlNewSilence(t *testing.T) {
 			exp: "https://example.grafana.net/alerting/silence/new?" +
 				"alertmanager=ALERTMANAGER_NAME&" +
 				"matcher=tenant%3Dexample&" +
-				"matcher=urgency%3Dhigh&",
+				"matcher=severity%3Dpage&",
 		},
 	} {
 		tc := tc
@@ -1310,8 +1310,8 @@ func TestDojoDocumentationHighUrgency(t *testing.T) {
 		fail bool
 	}{
 		{
-			title: "dojo.documentation.high_urgency",
-			in:    `{{ template "dojo.documentation.high_urgency" . }}`,
+			title: "dojo.documentation.page_severity",
+			in:    `{{ template "dojo.documentation.page_severity" . }}`,
 			data: Data{
 				GroupLabels: KV{
 					"label1": "value $1",
@@ -1319,10 +1319,10 @@ func TestDojoDocumentationHighUrgency(t *testing.T) {
 				},
 				CommonLabels: KV{
 					"tenant":  "example",
-					"urgency": "high",
+					"severity": "page",
 				},
 			},
-			exp: "Alert(s) of high urgency have fired meaning there's likely business impact going on. Please work on fixing the problem IMMEDIATELY!\n" +
+			exp: "Alert(s) of page severity have fired meaning there's likely business impact going on. Please work on fixing the problem IMMEDIATELY!\n" +
 				"\n" +
 				"You must work until all firing alerts are resolved.",
 		},
@@ -1354,8 +1354,8 @@ func TestDojoDocumentationLowUrgency(t *testing.T) {
 		fail bool
 	}{
 		{
-			title: "dojo.documentation.low_urgency",
-			in:    `{{ template "dojo.documentation.low_urgency" . }}`,
+			title: "dojo.documentation.ticket_severity",
+			in:    `{{ template "dojo.documentation.ticket_severity" . }}`,
 			data: Data{
 				GroupLabels: KV{
 					"label1": "value $1",
@@ -1363,7 +1363,7 @@ func TestDojoDocumentationLowUrgency(t *testing.T) {
 				},
 				CommonLabels: KV{
 					"tenant":  "example",
-					"urgency": "low",
+					"severity": "ticket",
 				},
 			},
 			exp: "Alert(s) fired indicating there's tolerable business impact or that action needs to be taken to prevent issues. They can be worked on the next business day.\n" +
@@ -1398,8 +1398,8 @@ func TestDojoDocumentationUnknownUrgency(t *testing.T) {
 		fail bool
 	}{
 		{
-			title: "dojo.documentation.unknown_urgency",
-			in:    `{{ template "dojo.documentation.unknown_urgency" . }}`,
+			title: "dojo.documentation.unknown_severity",
+			in:    `{{ template "dojo.documentation.unknown_severity" . }}`,
 			data: Data{
 				GroupLabels: KV{
 					"label1": "value $1",
@@ -1407,16 +1407,16 @@ func TestDojoDocumentationUnknownUrgency(t *testing.T) {
 				},
 				CommonLabels: KV{
 					"tenant":  "example",
-					"urgency": "low",
+					"severity": "ticket",
 				},
 			},
-			exp: "An alert without a label urgency set to either high or low fired. The worst is assumed here: that the alert is of high urgency.\n" +
+			exp: "An alert without a severity label set to either page or ticket fired. The worst is assumed here: that the alert is of page severity.\n" +
 				"\n" +
 				"This only happens when a misconfiguration happened on this alert, so it needs fixing. There are two actions required.\n" +
 				"\n" +
-				"The immediate action, is to evaluate the real urgency of the firing alert(s) and work on it accordingly.\n" +
+				"The immediate action, is to evaluate the real severity of the firing alert(s) and work on it accordingly.\n" +
 				"\n" +
-				"The secondary action, is to fix the alert configuration so that it fires with a correctly defined urgency next time.",
+				"The secondary action, is to fix the alert configuration so that it fires with a correctly defined severity next time.",
 		},
 	} {
 		tc := tc
@@ -1453,46 +1453,46 @@ func TestDojoSlack(t *testing.T) {
 				Status:   "firing",
 				CommonLabels: KV{
 					"tenant":  "example",
-					"urgency": "low",
+					"severity": "ticket",
 				},
 			},
-			exp: "example: low urgency alerts firing | https://example.grafana.net/alerting/list?dataSource=DATASOURCE_NAME&queryString=tenant%3Dexample,urgency%3Dlow,&ruleType=alerting&alertState=firing",
+			exp: "example: ticket severity alerts firing | https://example.grafana.net/alerting/list?dataSource=DATASOURCE_NAME&queryString=tenant%3Dexample,severity%3Dticket,&ruleType=alerting&alertState=firing",
 		},
 		{
-			title: "dojo.slack.color with firing high urgency alerts",
+			title: "dojo.slack.color with firing page severity alerts",
 			in:    `{{ template "dojo.slack.color" . }}`,
 			data: Data{
 				Status: "firing",
 				CommonLabels: KV{
-					"urgency": "high",
+					"severity": "page",
 				},
 			},
 			exp: "danger",
 		},
 		{
-			title: "dojo.slack.color with firing low urgency alerts",
+			title: "dojo.slack.color with firing ticket severity alerts",
 			in:    `{{ template "dojo.slack.color" . }}`,
 			data: Data{
 				Status: "firing",
 				CommonLabels: KV{
-					"urgency": "low",
+					"severity": "ticket",
 				},
 			},
 			exp: "warning",
 		},
 		{
-			title: "dojo.slack.color with firing bad urgency alerts",
+			title: "dojo.slack.color with firing bad severity alerts",
 			in:    `{{ template "dojo.slack.color" . }}`,
 			data: Data{
 				Status: "firing",
 				CommonLabels: KV{
-					"urgency": "bad",
+					"severity": "bad",
 				},
 			},
 			exp: "danger",
 		},
 		{
-			title: "dojo.slack.color with firing no urgency alerts",
+			title: "dojo.slack.color with firing no severity alerts",
 			in:    `{{ template "dojo.slack.color" . }}`,
 			data: Data{
 				Status: "firing",
